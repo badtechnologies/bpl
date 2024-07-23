@@ -6,7 +6,7 @@ import { Snippet } from "@nextui-org/snippet";
 import { Link } from "@nextui-org/link";
 
 export default function Page({ params }: { params: { package: string } }) {
-  const fp = path.join(process.cwd(), "..", "lib", params.package, "bpl.json");
+  const fp = path.join(process.cwd(), "lib", params.package, "bpl.json");
   if (!fs.existsSync(fp)) {
     notFound();
   }

@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   let query = new URLSearchParams(req.url.split("?")[1]).get("query");
 
   try {
-    const files = fs.readdirSync(path.join(process.cwd(), "../lib"), {
+    const files = fs.readdirSync(path.join(process.cwd(), "lib"), {
       withFileTypes: true,
     });
 
