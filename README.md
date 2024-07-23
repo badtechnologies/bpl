@@ -4,6 +4,10 @@ Home for bdsh packages and other tools.
 
 Read the documentation at [badtechnologies.github.io/bdsh/bpl](https://badtechnologies.github.io/bdsh/bpl.html), which details how to create, publish, and install packages, amongst everything you need to know about bdsh.
 
+## BadOS Package Portal
+
+Online web app to browse the BadOS Dynamic Shell Package Library.
+
 ## License
 
 The files in this project are subject to their own licenses.
