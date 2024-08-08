@@ -2,7 +2,5 @@
 	"name": "Basic Ping Library",
 	"version": "1.0.0",
 	"author": "Kevin Dalli",
-	"bin": "ping.py",
-	"homepage": "https:/NaN.com",
-	"requires": []
+	"bin": "ping.py"
 }
