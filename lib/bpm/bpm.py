@@ -38,7 +38,7 @@ class Package:
         return (f"BPL_Package(name={self.name}, version={self.version}, author={self.author}, bin={self.bin_uri}, homepage={self.homepage}, requires={self.requires})")
 
     @staticmethod
-    def load_json(package, data):
+    def load_json(package, data, repo):
         return Package(
             name=data['name'],
             id=package,
@@ -46,27 +46,26 @@ class Package:
             author=data['author'],
             bin=data.get('bin'),
             homepage=data.get('homepage'),
-            requires=data.get('requires', [])
+            requires=data.get('requires', []),
+            repo=repo
         )
 
     @staticmethod
-    def fetch(package: str, repo: str = BPL_REPO):
+    def fetch(package: str, repo):
         res = requests.get(f'https://raw.githubusercontent.com/{repo}/lib/{package}/bpl.json')
 
         if res.status_code == 200:
-            return Package.load_json(package, json.loads(res.content))
+            return Package.load_json(package, json.loads(res.content), repo)
         elif res.status_code == 404:
-            raise PackageException(
-                package, "does not exist or could not be found")
+            raise PackageException(package, "does not exist or could not be found")
         else:
-            raise PackageException(
-                package, f"something went wrong. HTTP {res.status_code} while fetching package data")
+            raise PackageException(package, f"something went wrong. HTTP {res.status_code} while fetching package data")
 
 
 packages: List[Package] = []
 
 
-def process_package(_pkg, repo: str = BPL_REPO):
+def process_package(_pkg, repo: str):
     try:
         package = Package.fetch(_pkg, repo)
         print(f"\t{_pkg}: found '{package.name}' v{package.version}")
