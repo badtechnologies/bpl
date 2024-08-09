@@ -4,6 +4,8 @@ import json
 from typing import List
 import os
 
+BPL_REPO = 'badtechnologies/bpl/main'
+
 
 def parse_cli_args():
     parser = argparse.ArgumentParser(description='BadOS Package Manager')
@@ -11,6 +13,7 @@ def parse_cli_args():
     parser.add_argument('action',type=str,choices=['install', 'remove'],help='action to perform')
     parser.add_argument('packages', nargs='+', type=str, help='packages to manage')
     parser.add_argument('-y', '--yes', action='store_true', help='assume "yes" as the answer to all prompts and run non-interactively')
+    parser.add_argument('-r', '--repo', default=BPL_REPO, help='set repo to download from, in the format "owner/repo/branch", must be on GitHub')
 
     return parser.parse_args()
 
@@ -21,18 +24,18 @@ class PackageException(Exception):
 
 
 class Package:
-    def __init__(self, name, id, version, author, bin=None, homepage=None, requires=None):
+    def __init__(self, name, id, version, author, bin=None, homepage=None, requires=None, repo=BPL_REPO):
         self.name = name
         self.id = id
         self.version = version
         self.author = author
-        self.bin_uri = f'https://raw.githubusercontent.com/badtechnologies/bpl/main/lib/{id}/{bin}' if bin is not None else None
+        self.bin_uri = f'https://raw.githubusercontent.com/{repo}/lib/{id}/{bin}' if bin is not None else None
         self.homepage = homepage
         self.requires = requires if requires is not None else []
+        self.repo = repo
 
     def __repr__(self):
-        return (f"BPL_Package(name={self.name}, version={self.version}, author={self.author}, "
-                f"bin={self.bin_uri}, homepage={self.homepage}, requires={self.requires})")
+        return (f"BPL_Package(name={self.name}, version={self.version}, author={self.author}, bin={self.bin_uri}, homepage={self.homepage}, requires={self.requires})")
 
     @staticmethod
     def load_json(package, data):
@@ -47,9 +50,8 @@ class Package:
         )
 
     @staticmethod
-    def fetch(package: str):
-        res = requests.get(
-            f'https://raw.githubusercontent.com/badtechnologies/bpl/main/lib/{package}/bpl.json')
+    def fetch(package: str, repo: str = BPL_REPO):
+        res = requests.get(f'https://raw.githubusercontent.com/{repo}/lib/{package}/bpl.json')
 
         if res.status_code == 200:
             return Package.load_json(package, json.loads(res.content))
@@ -64,9 +66,9 @@ class Package:
 packages: List[Package] = []
 
 
-def process_package(_pkg):
+def process_package(_pkg, repo: str = BPL_REPO):
     try:
-        package = Package.fetch(_pkg)
+        package = Package.fetch(_pkg, repo)
         print(f"\t{_pkg}: found '{package.name}' v{package.version}")
         packages.append(package)
         return package.requires if package.requires else []
@@ -83,12 +85,12 @@ def main():
 
         deps = []
         for package in args.packages:
-            deps.extend(process_package(package))
+            deps.extend(process_package(package, args.repo))
 
         while deps:
             new_deps = []
             for package in deps:
-                new_deps.extend(process_package(package))
+                new_deps.extend(process_package(package, args.repo))
             deps = new_deps
 
         print()
