@@ -1,7 +1,17 @@
 {
-	"name": "BadBandSSH",
-	"version": "0.9",
-	"author": "Logan Dhillon",
-	"homepage": "https://github.com/badtechnologies/bdsh/blob/main/docs/bssh.md",
-	"bin": "bssh.py"
+  "name": "BadBandSSH",
+  "id": "bssh",
+  "version": "0.9.1",
+  "author": "Logan Dhillon",
+  "homepage": "https://github.com/badtechnologies/bdsh/blob/main/docs/bssh.md",
+  "binaries": {
+    "bssh": "bssh.py"
+  },
+  "pythonDependencies": {
+    "paramiko": "~5.0.0"
+  },
+  "setupScripts": [
+    "setup.py"
+  ],
+  "shellVersion": "*"
 }
