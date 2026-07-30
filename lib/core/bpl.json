@@ -5,6 +5,10 @@
   "dependencies": {
     "bssh": "*"
   },
+  "pythonDependencies": {
+    "requests": "^2.34.2",
+    "argon2-cffi": "^25.1.0"
+  },
   "id": "core",
   "shellVersion": "*"
 }
