@@ -1,8 +1,10 @@
 {
-	"name": "bdsh core packages",
-	"version": "0.1",
-	"author": "Logan Dhillon",
-	"requires": [
-		"bssh"
-	]
+  "name": "bdsh core packages",
+  "version": "0.1.1",
+  "author": "Logan Dhillon",
+  "dependencies": {
+    "bssh": "*"
+  },
+  "id": "core",
+  "shellVersion": "*"
 }

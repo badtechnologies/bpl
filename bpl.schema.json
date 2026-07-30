@@ -1,35 +1,69 @@
 {
-	"$schema": "http://json-schema.org/draft-04/schema#",
-	"type": "object",
-	"properties": {
-		"name": {
-			"type": "string"
-		},
-		"version": {
-			"type": "string"
-		},
-		"author": {
-			"type": "string"
-		},
-		"bin": {
-			"type": "string"
-		},
-		"homepage": {
-			"type": "string"
-		},
-		"license": {
-			"type": "string"
-		},
-		"requires": {
-			"type": "array",
-			"items": {
-				"type": "string"
-			}
-		}
-	},
-	"required": [
-		"name",
-		"version",
-		"author"
-	]
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "author": {
+      "type": "string"
+    },
+    "binaries": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "setupScripts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "license": {
+      "type": "string"
+    },
+    "shellVersion": {
+      "type": "string",
+      "pattern": "^(\\*|\\^?\\d+\\.\\d+\\.\\d+|~\\d+\\.\\d+\\.\\d+|>=?\\d+\\.\\d+\\.\\d+|<=?\\d+\\.\\d+\\.\\d+)$"
+    },
+    "dependencies": {
+      "$ref": "#/definitions/dependencyMap"
+    },
+    "pythonDependencies": {
+      "$ref": "#/definitions/dependencyMap"
+    }
+  },
+  "required": [
+    "name",
+    "id",
+    "version",
+    "author",
+    "shellVersion"
+  ],
+  "definitions": {
+    "dependencyMap": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^(\\*|\\^?\\d+\\.\\d+\\.\\d+|~\\d+\\.\\d+\\.\\d+|>=?\\d+\\.\\d+\\.\\d+|<=?\\d+\\.\\d+\\.\\d+)$"
+      }
+    }
+  }
 }

@@ -1,6 +1,10 @@
 {
-	"name": "Basic Ping Library",
-	"version": "1.0.0",
-	"author": "Kevin Dalli",
-	"bin": "ping.py"
+  "name": "Basic Ping Library",
+  "version": "1.0.0",
+  "author": "Kevin Dalli",
+  "binaries": {
+    "ping": "ping.py"
+  },
+  "id": "ping",
+  "shellVersion": ">=0.1.0"
 }
