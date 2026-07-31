@@ -1,7 +1,7 @@
 {
   "name": "BadBandSSH",
   "id": "bssh",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "author": "Logan Dhillon",
   "homepage": "https://github.com/badtechnologies/bdsh/blob/main/docs/bssh.md",
   "binaries": {
@@ -13,5 +13,5 @@
   "setupScripts": [
     "setup.py"
   ],
-  "shellVersion": "*"
+  "shellVersion": "^0.5.0"
 }

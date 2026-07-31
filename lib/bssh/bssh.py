@@ -1,6 +1,6 @@
 import socket
 import threading
-from threading import Thread, current_thread
+from threading import Thread
 
 import paramiko
 from bdsh.io import TerminalIO
@@ -63,10 +63,6 @@ class SSHServer(paramiko.ServerInterface):
         return True
 
 
-def log(s: str):
-    print(f"[{current_thread().name}]\t{s}")
-
-
 class SSHDaemon:
     def __init__(self, host_key=paramiko.RSAKey(filename='bdsh/cfg/badbandssh_rsa_key'), port=2200):
         self.host_key = host_key
@@ -77,7 +73,6 @@ class SSHDaemon:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(("", self.port))
         sock.listen(100)
-        log(f"Listening for connection on port {self.port}")
 
         while True:
             client, addr = sock.accept()
@@ -102,5 +97,5 @@ class SSHDaemon:
         transport.close()
 
 
-if __name__ == "__main__":
+def main(session: Session, args: list[str]):
     SSHDaemon().start()
