@@ -25,10 +25,13 @@ class SSHTerminal(TerminalIO):
         return self.channel.recv(size).decode()
 
     def readline(self, size=65536):
-        data = b''
-        while not data.endswith(b'\n') and len(data) < size:
-            data += self.channel.recv(1)
-        return data.decode()
+        while b"\n" not in self.buffer:
+            data = self.channel.recv(1024)
+            if not data: return ""
+            self.buffer += data
+
+        line, self.buffer = self.buffer.split(b"\n", 1)
+        return line.decode() + "\n"
 
     def flush(self):
         return  # paramiko handles data flushing
