@@ -115,10 +115,12 @@ class SSHDaemon:
             shell = Shell(Session(SSHTerminal(channel), server.user))
             if server.command:
                 shell.run_line(server.command)
+                channel.send_exit_status(0)
             else:
                 shell.start()
         except Exception as e:
             self.console.io.println(f"BadBandSSH session error: {e}")
+            channel.send_exit_status(1)
 
         channel.close()
         transport.close()
