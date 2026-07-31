@@ -14,6 +14,9 @@ class SSHTerminal(TerminalIO):
     def __init__(self, channel: paramiko.Channel):
         self.channel = channel
         self.buffer = b''
+        self.width = 80
+        self.height = 24
+        self.term = None
 
     def write(self, data):
         self.channel.sendall(data.encode())
@@ -34,7 +37,7 @@ class SSHTerminal(TerminalIO):
         self.channel.close()
 
     def get_size(self):
-        return None
+        return self.width, self.height
 
     def is_interactive(self):
         return True
@@ -47,9 +50,9 @@ class SSHServer(paramiko.ServerInterface):
 
     def check_auth_password(self, username, password):
         userman = UserManager()
-        user = userman.get_user_by_credentials(username, password)
+        self.user = userman.get_user_by_credentials(username, password)
 
-        return paramiko.common.AUTH_SUCCESSFUL if user else paramiko.common.AUTH_FAILED
+        return paramiko.common.AUTH_SUCCESSFUL if self.user else paramiko.common.AUTH_FAILED
 
     def get_allowed_auths(self, username):
         return "password"
@@ -61,6 +64,13 @@ class SSHServer(paramiko.ServerInterface):
 
     def check_channel_shell_request(self, channel):
         self.event.set()
+        return True
+
+    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
+        self.term = term.decode()
+        self.width = width
+        self.height = height
+
         return True
 
 
