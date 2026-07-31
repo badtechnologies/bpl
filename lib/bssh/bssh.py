@@ -50,6 +50,12 @@ class SSHServer(paramiko.ServerInterface):
     def __init__(self):
         self.event = threading.Event()
         self.user = None
+        self.command = None
+
+    def check_channel_exec_request(self, channel, command):
+        self.command = command.decode()
+        self.event.set()
+        return True
 
     def check_auth_password(self, username, password):
         userman = UserManager()
@@ -78,9 +84,10 @@ class SSHServer(paramiko.ServerInterface):
 
 
 class SSHDaemon:
-    def __init__(self, host_key=paramiko.RSAKey(filename=get_shell_path("cfg", "badbandssh_rsa_key")), port=2200):
+    def __init__(self, console: Session, host_key=paramiko.RSAKey(filename=get_shell_path("cfg", "badbandssh_rsa_key")), port=2200):
         self.host_key = host_key
         self.port = port
+        self.console = console
 
     def start(self):
         sock = socket.socket()
@@ -104,12 +111,18 @@ class SSHDaemon:
         server.event.wait(10)
         if not server.event.is_set(): return
 
-        shell = Shell(Session(SSHTerminal(channel), server.user))
-        shell.start()
+        try:
+            shell = Shell(Session(SSHTerminal(channel), server.user))
+            if server.command:
+                shell.run_line(server.command)
+            else:
+                shell.start()
+        except Exception as e:
+            self.console.io.println(f"BadBandSSH session error: {e}")
 
         channel.close()
         transport.close()
 
 
 def main(session: Session, args: list[str]):
-    SSHDaemon().start()
+    SSHDaemon(session).start()
