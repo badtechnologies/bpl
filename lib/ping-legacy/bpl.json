@@ -6,5 +6,5 @@
     "ping": "ping.py"
   },
   "id": "ping-legacy",
-  "shellVersion": ">=0.1.0"
+  "shellVersion": "<=0.3.2"
 }
