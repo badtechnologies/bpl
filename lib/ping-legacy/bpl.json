@@ -5,6 +5,6 @@
   "binaries": {
     "ping": "ping.py"
   },
-  "id": "ping",
+  "id": "ping-legacy",
   "shellVersion": ">=0.1.0"
 }
