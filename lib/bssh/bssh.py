@@ -1,6 +1,7 @@
 import socket
 import threading
 from threading import Thread
+from typing import Callable
 
 import paramiko
 from bdsh import get_shell_path
@@ -47,7 +48,8 @@ class SSHTerminal(TerminalIO):
 
 
 class SSHServer(paramiko.ServerInterface):
-    def __init__(self):
+    def __init__(self, terminal_supplier: Callable[[], SSHTerminal]):
+        self.terminal_supplier = terminal_supplier
         self.event = threading.Event()
         self.user = None
         self.command = None
@@ -76,9 +78,9 @@ class SSHServer(paramiko.ServerInterface):
         return True
 
     def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
-        self.term = term.decode()
-        self.width = width
-        self.height = height
+        self.terminal_supplier().term = term.decode()
+        self.terminal_supplier().width = width
+        self.terminal_supplier().height = height
 
         return True
 
@@ -103,16 +105,20 @@ class SSHDaemon:
         transport = paramiko.Transport(client)
         transport.add_server_key(self.host_key)
 
-        server = SSHServer()
+        terminal: SSHTerminal | None = None
+        server = SSHServer(lambda: terminal)
         transport.start_server(server=server)
+
         channel = transport.accept(30)
         if channel is None: return
+        terminal = SSHTerminal(channel)
+        channel.sendall(b"stty echo\n") # enable echo
 
         server.event.wait(10)
         if not server.event.is_set(): return
 
         try:
-            shell = Shell(Session(SSHTerminal(channel), server.user))
+            shell = Shell(Session(terminal, server.user))
             if server.command:
                 shell.run_line(server.command)
                 channel.send_exit_status(0)
