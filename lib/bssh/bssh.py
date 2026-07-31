@@ -1,124 +1,106 @@
-from io import TextIOBase
 import socket
 import threading
+from threading import Thread, current_thread
+
 import paramiko
-import json
-import bdsh
+from bdsh.io import TerminalIO
+from bdsh.session import Session
+from bdsh.shell import Shell
+from bdsh.user import UserManager
 
 
-class ChannelTextIO(TextIOBase):
+class SSHTerminal(TerminalIO):
     def __init__(self, channel: paramiko.Channel):
-        self._channel = channel
-        self._buffer = b''
+        self.channel = channel
+        self.buffer = b''
 
     def write(self, data):
-        self._channel.sendall(data.encode())
+        self.channel.sendall(data.encode())
 
     def read(self, size=-1):
-        if size < 0:
-            return self._channel.recv(size).decode()
-        else:
-            return self._channel.recv(size).decode()
+        return self.channel.recv(size).decode()
 
-    def readline(self, size=-1):
-        if size == -1:
-            size = 65536
+    def readline(self, size=65536):
         data = b''
         while not data.endswith(b'\n') and len(data) < size:
-            data += self._channel.recv(1)
+            data += self.channel.recv(1)
         return data.decode()
 
     def flush(self):
-        pass
+        return  # paramiko handles data flushing
 
+    def close(self):
+        self.channel.close()
 
-with open("bdsh/cfg/users.json", 'r') as f:
-    USERS = json.load(f)
+    def get_size(self):
+        return None
 
-host_key = paramiko.RSAKey(filename='bdsh/cfg/badbandssh_rsa_key')
+    def is_interactive(self):
+        return True
 
 
 class SSHServer(paramiko.ServerInterface):
     def __init__(self):
         self.event = threading.Event()
-        self.username = ""
+        self.user = None
 
     def check_auth_password(self, username, password):
-        self.username = username
-        return paramiko.AUTH_SUCCESSFUL if USERS.get(username) == password else paramiko.AUTH_FAILED
+        userman = UserManager()
+        user = userman.get_user_by_credentials(username, password)
+
+        return paramiko.common.AUTH_SUCCESSFUL if user else paramiko.common.AUTH_FAILED
 
     def get_allowed_auths(self, username):
         return "password"
 
     def check_channel_request(self, kind, chanid):
         if kind == "session":
-            return paramiko.OPEN_SUCCEEDED
-        return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+            return paramiko.common.OPEN_SUCCEEDED
+        return paramiko.common.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_channel_shell_request(self, channel):
         self.event.set()
         return True
 
-    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
-        return True
-
 
 def log(s: str):
-    print(f"[{threading.current_thread().name}]\t{s}")
+    print(f"[{current_thread().name}]\t{s}")
 
 
-def handle_client(client_socket):
-    server = SSHServer()
+class SSHDaemon:
+    def __init__(self, host_key=paramiko.RSAKey(filename='bdsh/cfg/badbandssh_rsa_key'), port=2200):
+        self.host_key = host_key
+        self.port = port
 
-    log("Incoming connection")
-
-    transport = paramiko.Transport(client_socket)
-    transport.add_server_key(host_key)
-
-    try:
-        transport.start_server(server=server)
-        channel = transport.accept(20)
-        if channel is None:
-            return
-
-        server.event.wait(10)
-        if not server.event.is_set():
-            raise Exception("No shell request")
-
-        threading.current_thread().name = server.username + "@" + \
-            threading.current_thread().name
-        log("Connection succeeded")
-
-        connio = ChannelTextIO(channel)
-
-        instance = bdsh.Shell(connio, connio, is_ssh=True)
-        instance.start()
-
-        channel.close()
-    except Exception as e:
-        log(f"FATAL: {e}")
-    finally:
-        transport.close()
-        log("Connection terminated")
-
-
-def start(port=2200):
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def start(self):
+        sock = socket.socket()
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(("", port))
+        sock.bind(("", self.port))
         sock.listen(100)
-
-        log(f"Listening for connection on port {port}")
+        log(f"Listening for connection on port {self.port}")
 
         while True:
             client, addr = sock.accept()
-            threading.Thread(target=handle_client, args=(
-                client,), name=f"{addr[0]}:{addr[1]}").start()
-    except KeyboardInterrupt:
-        sock.close()
-        exit()
+            Thread(target=self.handle, args=(client,)).start()
+
+    def handle(self, client):
+        transport = paramiko.Transport(client)
+        transport.add_server_key(self.host_key)
+
+        server = SSHServer()
+        transport.start_server(server=server)
+        channel = transport.accept(30)
+        if channel is None: return
+
+        server.event.wait(10)
+        if not server.event.is_set(): return
+
+        shell = Shell(Session(SSHTerminal(channel), server.user))
+        shell.start()
+
+        channel.close()
+        transport.close()
 
 
 if __name__ == "__main__":
-    start()
+    SSHDaemon().start()
