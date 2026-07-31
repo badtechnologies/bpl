@@ -3,6 +3,7 @@ import threading
 from threading import Thread
 
 import paramiko
+from bdsh import get_shell_path
 from bdsh.io import TerminalIO
 from bdsh.session import Session
 from bdsh.shell import Shell
@@ -64,7 +65,7 @@ class SSHServer(paramiko.ServerInterface):
 
 
 class SSHDaemon:
-    def __init__(self, host_key=paramiko.RSAKey(filename='bdsh/cfg/badbandssh_rsa_key'), port=2200):
+    def __init__(self, host_key=paramiko.RSAKey(filename=get_shell_path("cfg", "badbandssh_rsa_key")), port=2200):
         self.host_key = host_key
         self.port = port
 
